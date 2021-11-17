@@ -41,8 +41,8 @@ app.get("/notes/:id", (request, response) => {
   }
 });
 
-app.delete("/notes/:id", (req, res) => {
-  const id = Number(req.params.id);
+app.delete("/notes/:id", (request, response) => {
+  const id = Number(request.params.id);
   notes = notes.filter((note) => note.id !== id);
 
   response.status(204).end();
