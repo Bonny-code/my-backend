@@ -1,8 +1,8 @@
-POST http://localhost:3001/notes
+POST http://localhost:3001/api/notes
 Content-Type: application/json
 
 {
-    "content": "AC Milan will win the League",
+    "content": "i am going to get a developer job",
     "important": true,
     "date": "wed, november 17th."
 }
