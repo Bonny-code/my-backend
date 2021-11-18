@@ -1,6 +1,11 @@
-const { response } = require("express");
 const express = require("express");
 const app = express();
+const bodyparser = require("body-parser");
+const { response } = require("express");
+app.use(bodyparser.json());
+const cors = require("cors");
+app.use(cors());
+app.use(express.static("build"));
 
 let notes = [
   {
@@ -23,15 +28,55 @@ let notes = [
   },
 ];
 
+const logger = (request, response, next) => {
+  console.log("Method:", request.method);
+  console.log("Path:  ", request.path);
+  console.log("Body:  ", request.body);
+  console.log("---");
+  next();
+};
+
+app.use(logger);
+
+const generateId = () => {
+  const maxId =
+    notes.length > 0
+      ? notes
+          .map((n) => n.id)
+          .sort((a, b) => a - b)
+          .reverse()[0]
+      : 1;
+  return maxId + 1;
+};
+
+app.post("/api/notes", (request, response) => {
+  const body = request.body;
+
+  if (body.content === undefined) {
+    return response.status(400).json({ error: "content missing" });
+  }
+
+  const note = {
+    content: body.content,
+    important: body.important || false,
+    date: new Date(),
+    id: generateId(),
+  };
+
+  notes = notes.concat(note);
+
+  response.json(note);
+});
+
 app.get("/", (req, res) => {
   res.send("<h1>This is my Backend App</h1>");
 });
 
-app.get("/notes", (req, res) => {
+app.get("/api/notes", (req, res) => {
   res.json(notes);
 });
 
-app.get("/notes/:id", (request, response) => {
+app.get("/api/notes/:id", (request, response) => {
   const id = Number(request.params.id);
   const note = notes.find((note) => note.id === id);
   if (note) {
@@ -41,12 +86,18 @@ app.get("/notes/:id", (request, response) => {
   }
 });
 
-app.delete("/notes/:id", (request, response) => {
+app.delete("/api/notes/:id", (request, response) => {
   const id = Number(request.params.id);
   notes = notes.filter((note) => note.id !== id);
 
   response.status(204).end();
 });
+
+const error = (request, response) => {
+  response.status(404).send({ error: "unknown endpoint" });
+};
+
+app.use(error);
 
 const port = 3001;
 app.listen(port);
