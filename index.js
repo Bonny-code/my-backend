@@ -7,6 +7,17 @@ const cors = require("cors");
 app.use(cors());
 app.use(express.static("build"));
 
+const mongoose = require("mongoose");
+
+const url = "";
+mongoose.connect(url);
+
+const Note = mongoose.model("Note", {
+  content: String,
+  date: Date,
+  importnat: Boolean,
+});
+
 let notes = [
   {
     id: 1,
@@ -72,8 +83,28 @@ app.get("/", (req, res) => {
   res.send("<h1>This is my Backend App</h1>");
 });
 
-app.get("/api/notes", (req, res) => {
-  res.json(notes);
+/*
+const formatNote = (note) => {
+  return {
+    content: note.content,
+    date: note.date,
+    important: note.important,
+    id: note._id,
+  };
+}; */
+
+const formatNote = (note) => {
+  const formattedNote = { ...note._doc, id: note._id };
+  delete formattedNote._id;
+  delete formattedNote.__v;
+
+  return formattedNote;
+};
+
+app.get("/api/notes", (request, response) => {
+  Note.find({}, { __v: 0 }).then((notes) => {
+    response.json(notes.map(formatNote));
+  });
 });
 
 app.get("/api/notes/:id", (request, response) => {
