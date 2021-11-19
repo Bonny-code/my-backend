@@ -1,0 +1,37 @@
+version: "2.2"
+services:
+  mongo:
+    restart: always
+    image: mongo:latest
+    expose:
+      - 27017
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: echo 'db.stats().ok' | mongo localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  notes:
+    restart: always
+    image: username/notes-backend
+    depends_on:
+      mongo:
+        condition: service_healthy
+    expose:
+      - 3000
+    environment:
+      MONGODB_URI: mongodb://mongo/notes
+      PORT: 3000
+
+  notes-front:
+    restart: always
+    image: username/notes-frontend
+    ports:
+      - 80:80
+    depends_on:
+      - notes
+
+volumes:
+  mongo_data:

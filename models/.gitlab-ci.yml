@@ -1,0 +1,30 @@
+image: node:latest
+
+artifact_download:
+  stage: build
+  script:
+    - "rm -rf build/" # This is not strictly necessary but some of you might have leftovers from previous exercises.
+    - 'curl --location --output artifacts.zip --header "JOB-TOKEN: $CI_JOB_TOKEN" "https://gitlab.utu.fi/api/v4/projects/7348/jobs/artifacts/master/download?job=build"'
+    - "unzip artifacts.zip"
+  artifacts:
+    paths:
+      - build/
+
+# This folder is cached between builds
+# http://docs.gitlab.com/ce/ci/yaml/README.html#cache
+cache:
+  paths:
+    - node_modules/
+
+stages:
+  - build
+  - deploy
+
+deploy:
+  stage: deploy
+  script:
+    - apt-get update -qy
+    - apt-get install -y ruby-dev
+    - gem install dpl
+    - dpl --provider=heroku --app=my-backend --api-key=$HEROKU_API_KEY --skip-cleanup=true
+  allow_failure: false
